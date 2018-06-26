@@ -4,7 +4,7 @@ import thunk from "redux-thunk"
 import { composeWithDevTools } from "redux-devtools-extension"
 
 import reducers from "../reducers"
-import apiMiddleware from "../middleware/jwtApi"
+import apiMiddleware from "../middleware/api"
 
 const configureStore = preloadedState => {
   const middleware = [

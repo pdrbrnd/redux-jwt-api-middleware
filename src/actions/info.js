@@ -5,9 +5,7 @@ export const getInfoTypes = {
 }
 
 export const fetchInfo = () => ({
-  request: () => ({
-    url: "/info"
-  }),
+  callAPI: api => api.get("/info"),
   types: [
     getInfoTypes.START,
     {

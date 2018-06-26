@@ -1,4 +1,5 @@
 import axios from "axios"
+import storage from "../lib/localStorage"
 
 class APIMiddleware {
   constructor(config, action, dispatch, getState) {
@@ -12,7 +13,7 @@ class APIMiddleware {
     this.axiosInstance = axios.create({ baseURL: config.baseUrl })
     this.axiosInstance.interceptors.request.use(
       axiosConfig => {
-        axiosConfig.headers.authorization = "teste" // eslint-disable-line no-param-reassign
+        axiosConfig.headers.authorization = storage.getItem(this.accessTokenKey) // eslint-disable-line no-param-reassign
         return axiosConfig
       },
       error => Promise.reject(error)
@@ -34,40 +35,37 @@ class APIMiddleware {
   }
 
   makeAPICall = async () => {
-    const { request, meta = {} } = this.action
+    const { callAPI, meta = {} } = this.action
     const [START, SUCCESS, ERROR] = this.action.types
 
     this.dispatchResponse({ type: START, meta })
 
-    try {
-      const response = await this.axiosInstance(
-        request(this.getState(), this.dispatch)
+    callAPI(this.axiosInstance, this.getState())
+      .then(response =>
+        this.dispatchResponse({
+          type: SUCCESS,
+          meta,
+          response,
+          error: false
+        })
       )
-      return this.dispatchResponse({
-        type: SUCCESS,
-        meta,
-        response,
-        error: false
+      .catch(error => {
+        this.dispatchResponse({
+          type: ERROR,
+          meta,
+          response: error,
+          error: true
+        })
       })
-    } catch (error) {
-      return this.dispatchResponse({
-        type: ERROR,
-        meta,
-        response: error,
-        error: true
-      })
-    }
   }
 
   call() {
+    // check here if the token should be refreshed
     this.makeAPICall()
   }
 }
 
-const callAPIMiddleware = config => ({
-  dispatch,
-  getState
-}) => next => action => {
+const middleware = config => ({ dispatch, getState }) => next => action => {
   const { types, shouldCallAPI = () => true } = action
 
   if (!types) return next(action)
@@ -78,4 +76,4 @@ const callAPIMiddleware = config => ({
   return api.call()
 }
 
-export default callAPIMiddleware
+export default middleware
