@@ -4,9 +4,15 @@ import thunk from "redux-thunk"
 import { composeWithDevTools } from "redux-devtools-extension"
 
 import reducers from "../reducers"
+import apiMiddleware from "../middleware/jwtApi"
 
 const configureStore = preloadedState => {
-  const middleware = [thunk]
+  const middleware = [
+    thunk,
+    apiMiddleware({
+      baseUrl: "http://13.250.110.132/api"
+    })
+  ]
 
   const store = createStore(
     reducers,
