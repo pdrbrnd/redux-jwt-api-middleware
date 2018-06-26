@@ -12,5 +12,11 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "@significa/eslint-config-significa": "^0.2.0",
+    "babel-eslint": "^8.2.5",
+    "eslint": "^5.0.1",
+    "prettier": "^1.13.6"
   }
 }
