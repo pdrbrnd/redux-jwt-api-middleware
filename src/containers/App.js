@@ -16,7 +16,7 @@ class App extends Component {
       <div>
         <h1>Hello world</h1>
         <button onClick={this.handleFetchInfo} disabled={info.isFetching}>
-          {!info.isFetching ? "Fetch API info" : "Fetching..."}
+          {!info.isFetching ? "Fetch user info" : "Fetching..."}
         </button>
         <hr />
         <h2>User email: {info.info.email}</h2>
