@@ -1,13 +1,5 @@
 import { combineReducers } from "redux"
 
-const todoReducer = (state = [], action) => {
-  if (action.type === "ADD_TODO") {
-    return [...state, action.payload]
-  }
+import info from "./info"
 
-  return state
-}
-
-export default combineReducers({
-  todos: todoReducer
-})
+export default combineReducers({ info })

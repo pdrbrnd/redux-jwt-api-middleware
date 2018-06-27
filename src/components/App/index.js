@@ -1,19 +1,11 @@
 import React from "react"
 import { Switch, Route, Link } from "react-router-dom"
+import App from "../../containers/App"
 
 export default () => (
   <div>
     <Switch>
-      <Route
-        exact
-        path="/"
-        render={() => (
-          <div>
-            <h1>Hello world from Home</h1>
-            <Link to="/about">About</Link>
-          </div>
-        )}
-      />
+      <Route exact path="/" component={App} />
       <Route
         exact
         path="/about"
