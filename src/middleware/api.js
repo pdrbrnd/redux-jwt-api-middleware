@@ -3,24 +3,33 @@ import storage from "../lib/localStorage"
 
 class APIMiddleware {
   constructor(config, action, dispatch, getState) {
-    this.accessTokenKey = config.accessTokenKey || "JWT_ACCESS_TOKEN"
-    this.refreshTokenKey = config.refreshTokenKey || "JWT_REFRESH_TOKEN"
+    /* 
+    Config
+    - baseUrl (String)
+    - tokenKey (String)
+    - tokenLifespan (Integer)
+    - getToken (Function)
+    */
+
+    // Token settings
+    this.tokenKey = config.tokenKey || "authToken"
     this.tokenLifespan = config.tokenLifespan || 1200
+    this.getToken = config.getToken
+      ? config.getToken
+      : token => `Bearer ${token}`
+    this.accessTokenKey = `${this.tokenKey}_ac`
+    this.refreshTokenKey = `${this.tokenKey}_rf`
+
+    // Requests settings
+    this.axiosInstance = axios.create({ baseURL: config.baseUrl })
+
+    // Middleware stuff
     this.action = action
     this.dispatch = dispatch
     this.getState = getState
-
-    this.axiosInstance = axios.create({ baseURL: config.baseUrl })
-    this.axiosInstance.interceptors.request.use(
-      axiosConfig => {
-        axiosConfig.headers.authorization = storage.getItem(this.accessTokenKey) // eslint-disable-line no-param-reassign
-        return axiosConfig
-      },
-      error => Promise.reject(error)
-    )
   }
 
-  dispatchResponse = ({ type, meta, response, error }) => {
+  dispatchAction = ({ type, meta, response, error }) => {
     this.dispatch({
       meta,
       // if the type is an object, we expect the 'payload' key to be a
@@ -34,15 +43,29 @@ class APIMiddleware {
     })
   }
 
-  makeAPICall = async () => {
+  makeRequest = async token => {
     const { callAPI, meta = {} } = this.action
     const [START, SUCCESS, ERROR] = this.action.types
 
-    this.dispatchResponse({ type: START, meta })
+    // Add token to authorization header
+    if (token) {
+      this.axiosInstance.interceptors.request.use(
+        config => ({
+          ...config,
+          headers: {
+            ...config.headers,
+            Authorization: config.headers.authorization || this.getToken(token)
+          }
+        }),
+        error => Promise.reject(error)
+      )
+    }
+
+    this.dispatchAction({ type: START, meta })
 
     callAPI(this.axiosInstance, this.getState())
       .then(response =>
-        this.dispatchResponse({
+        this.dispatchAction({
           type: SUCCESS,
           meta,
           response,
@@ -50,7 +73,7 @@ class APIMiddleware {
         })
       )
       .catch(error => {
-        this.dispatchResponse({
+        this.dispatchAction({
           type: ERROR,
           meta,
           response: error,
@@ -61,7 +84,7 @@ class APIMiddleware {
 
   call() {
     // check here if the token should be refreshed
-    this.makeAPICall()
+    this.makeRequest(storage.getItem(this.accessTokenKey))
   }
 }
 
