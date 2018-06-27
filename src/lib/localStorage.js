@@ -13,5 +13,12 @@ export default {
     } catch (error) {
       return undefined
     }
+  },
+  removeItem: key => {
+    try {
+      return localStorage.removeItem(key)
+    } catch (error) {
+      return undefined
+    }
   }
 }

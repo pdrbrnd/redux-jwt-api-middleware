@@ -1,27 +1,59 @@
 import axios from "axios"
-import storage from "../lib/localStorage"
+import decode from "jwt-decode"
+
+import Auth from "../lib/auth"
+
+// time of life (in seconds) required to do a refresh
+const TIME_REQUIRED_TO_REFRESH = 300
 
 class APIMiddleware {
   constructor(config, action, dispatch, getState) {
     /* 
-    Config
+    Config (Object)
+    - auth (Class instance)
+      Use Auth class to initialize new auth instance
+      Auth's constructor accepts an object with two keys:
+      - accessToken (String): localStorage's key to save access token
+      - refreshToken (String): localStorage's key to save refresh token
+
     - baseUrl (String)
-    - tokenKey (String)
-    - tokenLifespan (Integer)
-    - getToken (Function)
+      The API's base url. e.g.: http://localhost:3000 (no trailing slash)
+
+    - parseToken (Function. Arguments: token)
+      The function to give the token to the authorization header
+      Should return a string
+
+    - makeRefreshTokenCall (Function. Arguments: axiosInstance, token)
+      The function to get a new refresh token
+      Should return a Promise
+
+    - getTokensFromResponse (Function. Arguments: responseData)
+      The function to get the tokens from the API response
+      Should return an object with the keys 'accessToken' and 'refreshToken'
     */
 
-    // Token settings
-    this.tokenKey = config.tokenKey || "authToken"
-    this.tokenLifespan = config.tokenLifespan || 1200
-    this.getToken = config.getToken
-      ? config.getToken
-      : token => `Bearer ${token}`
-    this.accessTokenKey = `${this.tokenKey}_ac`
-    this.refreshTokenKey = `${this.tokenKey}_rf`
+    // Auth class instance
+    this.auth = config.auth || new Auth()
 
-    // Requests settings
-    this.axiosInstance = axios.create({ baseURL: config.baseUrl })
+    // Axios instance with baseURL set
+    this.axiosInstance = axios.create({ baseURL: config.baseUrl || "" })
+
+    // Function to parse tokens in request headers
+    this.parseToken = config.parseToken
+      ? config.parseToken
+      : token => `Bearer ${token}`
+
+    // Function to get a new token
+    this.curriedMakeRefreshTokenCall = config.makeRefreshTokenCall
+      ? config.makeRefreshTokenCall.bind(this, this.axiosInstance)
+      : token => {
+          this.axiosInstance.post("/refresh", { jwt_refresh: token })
+        }
+
+    // Function to get tokens from refresh response
+    this.getTokensFromResponse =
+      config.getTokensFromResponse ||
+      (res => ({ accessToken: res.jwt, refreshToken: res.jwt_refresh }))
 
     // Middleware stuff
     this.action = action
@@ -54,7 +86,8 @@ class APIMiddleware {
           ...config,
           headers: {
             ...config.headers,
-            Authorization: config.headers.authorization || this.getToken(token)
+            Authorization:
+              config.headers.authorization || this.parseToken(token)
           }
         }),
         error => Promise.reject(error)
@@ -82,9 +115,45 @@ class APIMiddleware {
       })
   }
 
+  shouldRefreshToken = token => {
+    const now = Math.round(new Date().getTime() / 1000)
+    const tokenExp = decode(token).exp
+    const diff = tokenExp - now
+
+    // If the difference between expiry and now (UNIX)
+    // is less than the required time to refresh
+    // we should request a new token
+    return diff < TIME_REQUIRED_TO_REFRESH
+  }
+
+  refreshToken = async () =>
+    this.curriedMakeRefreshTokenCall(this.auth.getRefreshToken())
+
+  saveToken = res => {
+    if (res.status !== 200 || !res.data) {
+      return null
+    }
+
+    const { accessToken, refreshToken } = this.getTokensFromResponse(res.data)
+
+    this.auth.login(accessToken, refreshToken)
+    return accessToken
+  }
+
   call() {
-    // check here if the token should be refreshed
-    this.makeRequest(storage.getItem(this.accessTokenKey))
+    const token = this.auth.getToken()
+
+    if (!token) {
+      this.makeRequest()
+    }
+
+    if (this.shouldRefreshToken(token)) {
+      this.refreshToken()
+        .then(this.saveToken)
+        .then(this.makeRequest)
+    } else {
+      this.makeRequest(token)
+    }
   }
 }
 

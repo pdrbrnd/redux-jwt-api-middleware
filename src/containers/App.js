@@ -19,7 +19,7 @@ class App extends Component {
           {!info.isFetching ? "Fetch API info" : "Fetching..."}
         </button>
         <hr />
-        <h2>Api version: {info.info.version}</h2>
+        <h2>User email: {info.info.email}</h2>
       </div>
     )
   }
