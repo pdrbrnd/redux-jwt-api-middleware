@@ -75,6 +75,24 @@ class APIMiddleware {
     })
   }
 
+  catchAPIErrors = error => {
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      return error.response
+    }
+
+    if (error.request) {
+      // The request was made but no response was received
+      // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+      // http.ClientRequest in node.js
+      return error.request
+    }
+
+    // Something happened in setting up the request that triggered an Error
+    return error.message
+  }
+
   makeRequest = async token => {
     const { callAPI, meta = {} } = this.action
     const [START, SUCCESS, ERROR] = this.action.types
@@ -109,7 +127,7 @@ class APIMiddleware {
         this.dispatchAction({
           type: ERROR,
           meta,
-          response: error,
+          response: this.catchAPIErrors(error),
           error: true
         })
       })
@@ -140,20 +158,20 @@ class APIMiddleware {
     return accessToken
   }
 
-  call() {
+  call = () => {
     const token = this.auth.getToken()
 
     if (!token) {
-      this.makeRequest()
+      return this.makeRequest()
     }
 
     if (this.shouldRefreshToken(token)) {
-      this.refreshToken()
+      return this.refreshToken()
         .then(this.saveToken)
         .then(this.makeRequest)
-    } else {
-      this.makeRequest(token)
     }
+
+    return this.makeRequest(token)
   }
 }
 

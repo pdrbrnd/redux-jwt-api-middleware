@@ -1,0 +1,31 @@
+.main-header {
+  background-color: #303846;
+  color: white;
+  padding: 24px;
+}
+
+.main-header__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.main-header__nav {
+  display: flex;
+}
+
+.main-header__nav-link {
+  color: white;
+
+  margin-right: 16px;
+
+  text-decoration: none;
+}
+
+.main-header__nav-link:last-child {
+  margin-right: 0;
+}
+
+.main-header__nav-link:hover {
+  opacity: 0.8;
+}

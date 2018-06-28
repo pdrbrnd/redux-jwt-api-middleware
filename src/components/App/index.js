@@ -1,21 +1,16 @@
 import React from "react"
-import { Switch, Route, Link } from "react-router-dom"
-import App from "../../containers/App"
+import { Switch, Route } from "react-router-dom"
+import Home from "../../views/Home"
+import { requireAuth, requireGuest } from "../../hoc/checkAuth"
+import Login from "../../views/Login"
+import Profile from "../../views/Profile"
 
 export default () => (
   <div>
     <Switch>
-      <Route exact path="/" component={App} />
-      <Route
-        exact
-        path="/about"
-        render={() => (
-          <div>
-            <h1>Hello world from About</h1>
-            <Link to="/">Home</Link>
-          </div>
-        )}
-      />
+      <Route exact path="/" component={Home} />
+      <Route exact path="/profile" component={requireAuth(Profile)} />
+      <Route exact path="/login" component={requireGuest(Login)} />
     </Switch>
   </div>
 )
