@@ -247,6 +247,26 @@ meta: {
 }
 ```
 
+#### Complete action
+
+```jsx
+export const getUserData = id => ({
+  shouldCallAPI: state => !state.profile.isFetching,
+  callAPI: api.get(`/users/${id}`),
+  types: [
+    "FETCH_PROFILE_START",
+    {
+      type: "FETCH_PROFILE_COMPLETE",
+      payload: response => response.data
+    },
+    "FETCH_PROFILE_ERROR"
+  ],
+  meta: {
+    userId: id
+  }
+});
+```
+
 ## Reducer creator
 
 ```jsx
