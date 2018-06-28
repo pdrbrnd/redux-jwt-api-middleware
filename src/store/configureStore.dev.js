@@ -2,16 +2,18 @@
 import { createStore, applyMiddleware } from "redux"
 import thunk from "redux-thunk"
 import { composeWithDevTools } from "redux-devtools-extension"
+import throttle from "lodash/throttle"
 
 import reducers from "../reducers"
 import apiMiddleware from "../middleware/api"
-import Auth from "../lib/auth"
+import { auth } from "../"
+import { getUser } from "../reducers/user"
 
 const configureStore = preloadedState => {
   const middleware = [
     thunk,
     apiMiddleware({
-      auth: new Auth(),
+      auth,
       baseUrl: "http://13.250.110.132/api",
       parseToken: token => `Bearer ${token}`,
       makeRefreshTokenCall: (axios, token) =>
@@ -27,6 +29,13 @@ const configureStore = preloadedState => {
     reducers,
     preloadedState,
     composeWithDevTools(applyMiddleware(...middleware))
+  )
+
+  store.subscribe(
+    throttle(() => {
+      auth.saveUser(getUser(store.getState()))
+    }),
+    1000
   )
 
   if (module.hot) {
