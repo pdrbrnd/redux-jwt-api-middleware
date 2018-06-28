@@ -15,7 +15,7 @@ export const login = ({ email, password }) => ({
       type: types.LOGIN_COMPLETE,
       payload: ({ data }) => {
         auth.login({
-          user: data.user,
+          data: data.user,
           accessToken: data.jwt,
           refreshToken: data.jwt_refresh
         })

@@ -2,7 +2,6 @@ import React, { Component } from "react"
 import PropTypes from "prop-types"
 import { connect } from "react-redux"
 import { Redirect } from "react-router-dom"
-import { getUser } from "../reducers/user"
 
 const getDisplayName = WrappedComponent =>
   WrappedComponent.displayName || WrappedComponent.name || "Component"
@@ -46,7 +45,7 @@ const checkAuth = (
   CheckAuth.propTypes = { isAuthed: PropTypes.bool.isRequired }
 
   return connect(state => ({
-    isAuthed: Object.keys(getUser(state)).length > 0
+    isAuthed: Object.keys(state.authData).length > 0
   }))(CheckAuth)
 }
 

@@ -15,7 +15,7 @@ import Auth from "./lib/auth"
 export const auth = new Auth()
 
 ReactDOM.render(
-  <Provider store={configureStore({ user: auth.getUser() || {} })}>
+  <Provider store={configureStore({ authData: auth.getData() || {} })}>
     <BrowserRouter>
       <App />
     </BrowserRouter>
