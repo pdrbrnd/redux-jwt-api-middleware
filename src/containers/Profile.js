@@ -4,7 +4,6 @@ import { connect } from "react-redux"
 import { logout } from "../actions/login"
 import { fetchProfile } from "../actions/profile"
 import { getIsLoading } from "../reducers/profile"
-import { getUser } from "../reducers/user"
 
 const Profile = props => (
   <div>
@@ -32,7 +31,7 @@ Profile.propTypes = {
 export default connect(
   state => ({
     loading: getIsLoading(state),
-    user: getUser(state)
+    user: state.authData
   }),
   { logout, fetchProfile }
 )(Profile)

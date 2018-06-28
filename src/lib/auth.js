@@ -2,19 +2,19 @@ import storage from "./localStorage"
 
 class Auth {
   constructor(config = {}) {
-    this.user = config.user || "auth_user"
+    this.dataKey = config.dataKey || "auth_data"
     this.accessToken = config.accessToken || "authToken_access"
     this.refreshToken = config.refreshToken || "authToken_refresh"
   }
 
-  login = ({ user, accessToken, refreshToken }) => {
-    if (user) this.saveUser(user)
+  login = ({ data, accessToken, refreshToken }) => {
+    if (data) this.saveData(data)
     if (accessToken) this.saveToken(accessToken)
     if (refreshToken) this.saveRefreshToken(refreshToken)
   }
 
   logout = () => {
-    storage.removeItem(this.user)
+    storage.removeItem(this.dataKey)
     storage.removeItem(this.accessToken)
     storage.removeItem(this.refreshToken)
   }
@@ -25,15 +25,15 @@ class Auth {
 
   saveRefreshToken = token => storage.setItem(this.refreshToken, token)
 
-  saveUser = state => {
+  saveData = state => {
     const serializedState = JSON.stringify(state)
 
-    storage.setItem(this.user, serializedState)
+    storage.setItem(this.dataKey, serializedState)
   }
 
-  getUser = () => {
+  getData = () => {
     try {
-      const serializedState = storage.getItem(this.user)
+      const serializedState = storage.getItem(this.dataKey)
 
       if (serializedState === null) {
         return undefined

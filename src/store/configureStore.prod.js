@@ -5,7 +5,6 @@ import throttle from "lodash/throttle"
 import reducers from "../reducers"
 import apiMiddleware from "../middleware/api"
 import { auth } from "../"
-import { getUser } from "../reducers/user"
 
 const configureStore = preloadedState => {
   const middleware = [
@@ -31,7 +30,7 @@ const configureStore = preloadedState => {
 
   store.subscribe(
     throttle(() => {
-      auth.saveUser(getUser(store.getState()))
+      auth.saveData(store.getState().authData) // same key defined to load auth data in the reducers
     }),
     1000
   )
