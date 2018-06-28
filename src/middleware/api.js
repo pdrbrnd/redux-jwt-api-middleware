@@ -154,7 +154,8 @@ class APIMiddleware {
 
     const { accessToken, refreshToken } = this.getTokensFromResponse(res.data)
 
-    this.auth.login({ accessToken, refreshToken })
+    this.auth.saveToken(accessToken)
+    this.auth.saveRefreshToken(refreshToken)
     return accessToken
   }
 
