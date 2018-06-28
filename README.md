@@ -17,6 +17,7 @@ It ships with:
 - `apiMiddleware` - The middleware
 - `Auth` - An Auth class to help saving stuff to localStorage
 - `createDataReducer` - A reducer creator to help create simple reducers to save and delete auth data
+- `checkAuth` - An High Order Component to protect routes
 
 ### Actions
 
@@ -33,7 +34,7 @@ export const fetchSomething = () => ({
 })
 ```
 
-### Auth class
+## Auth class
 
 Auth's constructor accepts an object with 3 optional parameters:
 
@@ -49,27 +50,22 @@ const auth = new Auth({
 })
 ```
 
-### Reducer creator
+### Available methods
 
-```jsx
-// in reducers/index.js
+- `login`: Accepts an object with `data`, `accessToken` and `refreshToken`.
+  Will save them to localStorage.
+- `logout`: Removes all three from localStorage
+- `isAuthed`: Returns a boolean to check whether there's an access token or not in localStorage
+- `saveToken`: Saves the access token
+- `saveRefreshToken`: Saves the refresh token
+- `saveData`: Saves auth extra data
+- `getToken`: To retrieve the access token
+- `getRefreshToken`: To retrieve the refresh token
+- `getData`: To retrieve the extra auth data
 
-export default combineReducers({
-  authData: createDataReducer({
-    // Array of types that will make the reducer save the payload
-    addDataTypes: [types.LOGIN_COMPLETE],
-    // Array of types to revert to the initialState
-    removeDataTypes: [types.LOGOUT],
-    // Initial State (Defaults to {})
-    initialState: {}
-  })
-  // Your other reducers here
-});
-```
+## Middleware
 
-## Installation
-
-### Setup middleware
+### Setup
 
 ```jsx
 apiMiddleware({
@@ -109,7 +105,7 @@ apiMiddleware({
 });
 ```
 
-#### Example
+**Example**
 
 ```jsx
 // in configureStore.prod.js
@@ -146,16 +142,16 @@ const configureStore = preloadedState => {
 export default configureStore;
 ```
 
-## Actions
+### Actions
 
-Action accept the following keys:
+Actions accept the following keys:
 
 - types
 - callAPI
 - shouldCallAPI
 - meta
 
-### types
+#### types
 
 It is mandatory for types to be an Array or **either Strings or Objects**
 
@@ -164,8 +160,6 @@ It is mandatory for `types` to be an Array with one element for each of the acti
 
 - Each must be a String or an Object (with 'type' and 'payload').
 - The Object's payload key must be a function that will be given the server response, dispatch function and state object.
-
-#### Examples
 
 ```jsx
 {
@@ -202,14 +196,12 @@ It is mandatory for `types` to be an Array with one element for each of the acti
 }
 ```
 
-### callAPI
+#### callAPI
 
 `callAPI`, as the name says, is the function to call the API. It will be given two arguments:
 
 - an axios instance: with the base url and a header interceptor to add authorization headers
 - the redux state
-
-#### Examples
 
 ```jsx
 {
@@ -233,11 +225,9 @@ It is mandatory for `types` to be an Array with one element for each of the acti
 }
 ```
 
-### shouldCallAPI
+#### shouldCallAPI
 
 A Function to evaluate if the request should return early. It is given the state and should return a boolean.
-
-#### Examples
 
 ```jsx
 shouldCallAPI: () => true;
@@ -247,7 +237,7 @@ shouldCallAPI: () => true;
 shouldCallAPI: state => !state.data.isFetching;
 ```
 
-### meta
+#### meta
 
 The `meta` object will be forwarded in each of the actions
 
@@ -255,6 +245,79 @@ The `meta` object will be forwarded in each of the actions
 meta: {
   someData: "This will be available in every action dispatched";
 }
+```
+
+## Reducer creator
+
+```jsx
+// in reducers/index.js
+
+export default combineReducers({
+  authData: createDataReducer({
+    // Array of types that will make the reducer save the payload
+    addDataTypes: [types.LOGIN_COMPLETE],
+    // Array of types to revert to the initialState
+    removeDataTypes: [types.LOGOUT],
+    // Initial State (Defaults to {})
+    initialState: {}
+  })
+  // Your other reducers here
+});
+```
+
+## checkAuth HOC (with [React Router](https://github.com/ReactTraining/react-router))
+
+An usual implementation will load the reducer above as the store's preloaded state:
+
+```jsx
+<Provider store={configureStore({ authData: auth.getData() || {} })}>
+```
+
+This High Order Component will make use of that piece of state to protect routes.
+`checkAuth` is a high-order-function that accepts an Object with the following keys:
+
+```jsx
+checkAuth({
+  /*
+    Function to map the state to a boolean that evaluates the authed status
+  */
+  mapIsAuthedToProps: state => Object.keys(state.authData).length > 0
+
+  /*
+    Boolean to define whether the HOC should redirect when the user is authed or not. Can be useful if some pages are available only for guest users.
+    Defaults to true
+  */
+  requireAuthentication: true
+
+  /*
+    Route to redirect to (using React Router's Redirect component).
+    Defaults to "/login"
+  */
+  redirectTo: "/login"
+})
+```
+
+An usual implementation of this High Order Component is to create a file `src/hoc/checkAuthentication.js` and create some defaults there:
+
+```jsx
+const mapIsAuthedToProps = state => Object.keys(state.authData).length > 0;
+
+export const requireAuth = checkAuth({
+  mapIsAuthedToProps
+});
+
+export const requireGuest = checkAuth({
+  mapIsAuthedToProps,
+  requireAuthentication: false,
+  redirectTo: "/profile"
+});
+```
+
+Then use it where you define the Routes:
+
+```jsx
+<Route exact path="/profile" component={requireAuth(Profile)} />
+<Route exact path="/login" component={requireGuest(Login)} />
 ```
 
 ---
