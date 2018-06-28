@@ -1,6 +1,5 @@
 import { createStore, applyMiddleware } from "redux"
 import thunk from "redux-thunk"
-import throttle from "lodash/throttle"
 
 import reducers from "../reducers"
 import apiMiddleware from "../middleware/api"
@@ -26,13 +25,6 @@ const configureStore = preloadedState => {
     reducers,
     preloadedState,
     applyMiddleware(...middleware)
-  )
-
-  store.subscribe(
-    throttle(() => {
-      auth.saveData(store.getState().authData) // same key defined to load auth data in the reducers
-    }),
-    1000
   )
 
   return store
