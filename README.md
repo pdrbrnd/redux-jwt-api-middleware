@@ -1,7 +1,5 @@
 # JWT API Middleware & Utils
 
-[WORK IN PROGRESS]
-
 With a little help from [Axios](https://github.com/axios/axios)
 
 ---
@@ -14,10 +12,11 @@ This middleware helps with:
 - Adding a JWT authorization header for authenticated calls
 - Proactively refreshing expired (or near-expired) tokens
 
-It also ships with:
+It ships with:
 
-- An Auth class to help saving stuff to localStorage
-- A reducer creator to help create simple reducers to save and delete auth data
+- `apiMiddleware` - The middleware
+- `Auth` - An Auth class to help saving stuff to localStorage
+- `createDataReducer` - A reducer creator to help create simple reducers to save and delete auth data
 
 ### Actions
 
@@ -257,3 +256,7 @@ meta: {
   someData: "This will be available in every action dispatched";
 }
 ```
+
+---
+
+Check source code for an example app.
