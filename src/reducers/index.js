@@ -8,8 +8,8 @@ import profile from "./profile"
 
 export default combineReducers({
   authData: createDataReducer({
-    addDataType: types.LOGIN_COMPLETE,
-    removeDataType: types.LOGOUT
+    addDataTypes: [types.LOGIN_COMPLETE],
+    removeDataTypes: [types.LOGOUT]
   }),
   login,
   profile
