@@ -223,3 +223,37 @@ It is mandatory for `types` to be an Array with one element for each of the acti
   callAPI: axios => axios.get("https://someurl.com/");
 }
 ```
+
+```jsx
+{
+  callAPI: (axios, state) => {
+    return axios.post(`/users/${state.user.id}/profile`, {
+      email: "mynewemail@domain.com"
+    });
+  };
+}
+```
+
+### shouldCallAPI
+
+A Function to evaluate if the request should return early. It is given the state and should return a boolean.
+
+#### Examples
+
+```jsx
+shouldCallAPI: () => true;
+```
+
+```jsx
+shouldCallAPI: state => !state.data.isFetching;
+```
+
+### meta
+
+The `meta` object will be forwarded in each of the actions
+
+```jsx
+meta: {
+  someData: "This will be available in every action dispatched";
+}
+```
