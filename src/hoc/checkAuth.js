@@ -6,12 +6,11 @@ import { Redirect } from "react-router-dom"
 const getDisplayName = WrappedComponent =>
   WrappedComponent.displayName || WrappedComponent.name || "Component"
 
-const checkAuth = (
-  config = {
-    requireAuthentication: true,
-    redirectTo: "/login"
-  }
-) => WrappedComponent => {
+const checkAuth = ({
+  requireAuthentication = true,
+  redirectTo = "/login",
+  mapIsAuthedToProps = state => !!state.authData
+}) => WrappedComponent => {
   class CheckAuth extends Component {
     state = { redirect: false }
 
@@ -25,15 +24,15 @@ const checkAuth = (
 
     checkAuthentication = () => {
       const shouldRedirect =
-        (!config.requireAuthentication && this.props.isAuthed) ||
-        (config.requireAuthentication && !this.props.isAuthed)
+        (!requireAuthentication && this.props.isAuthed) ||
+        (requireAuthentication && !this.props.isAuthed)
 
       if (shouldRedirect) this.setState({ redirect: true })
     }
 
     render() {
       return this.state.redirect ? (
-        <Redirect to={config.redirectTo} />
+        <Redirect to={redirectTo} />
       ) : (
         <WrappedComponent {...this.props} />
       )
@@ -44,15 +43,7 @@ const checkAuth = (
 
   CheckAuth.propTypes = { isAuthed: PropTypes.bool.isRequired }
 
-  return connect(state => ({
-    isAuthed: Object.keys(state.authData).length > 0
-  }))(CheckAuth)
+  return connect(state => ({ isAuthed: mapIsAuthedToProps(state) }))(CheckAuth)
 }
-
-export const requireAuth = checkAuth()
-export const requireGuest = checkAuth({
-  requireAuthentication: false,
-  redirectTo: "/profile"
-})
 
 export default checkAuth

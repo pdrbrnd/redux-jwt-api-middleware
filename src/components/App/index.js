@@ -1,7 +1,7 @@
 import React from "react"
 import { Switch, Route } from "react-router-dom"
 import Home from "../../views/Home"
-import { requireAuth, requireGuest } from "../../hoc/checkAuth"
+import { requireAuth, requireGuest } from "../../hoc/checkAuthentication"
 import Login from "../../views/Login"
 import Profile from "../../views/Profile"
 
