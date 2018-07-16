@@ -95,7 +95,7 @@ class APIMiddleware {
 
   makeRequest = async token => {
     const { callAPI, meta = {} } = this.action
-    const [START, SUCCESS, ERROR] = this.action.types
+    const { 1: SUCCESS, 2: ERROR } = this.action.types
 
     // Add token to authorization header
     if (token) {
@@ -112,25 +112,29 @@ class APIMiddleware {
       )
     }
 
-    this.dispatchAction({ type: START, meta })
+    return new Promise((resolve, reject) => {
+      callAPI(this.axiosInstance, this.getState())
+        .then(response => {
+          this.dispatchAction({
+            type: SUCCESS,
+            meta,
+            response,
+            error: false
+          })
 
-    callAPI(this.axiosInstance, this.getState())
-      .then(response =>
-        this.dispatchAction({
-          type: SUCCESS,
-          meta,
-          response,
-          error: false
+          return resolve(response)
         })
-      )
-      .catch(error => {
-        this.dispatchAction({
-          type: ERROR,
-          meta,
-          response: this.catchAPIErrors(error),
-          error: true
+        .catch(error => {
+          this.dispatchAction({
+            type: ERROR,
+            meta,
+            response: this.catchAPIErrors(error),
+            error: true
+          })
+
+          return reject(error)
         })
-      })
+    })
   }
 
   shouldRefreshToken = token => {
@@ -154,12 +158,18 @@ class APIMiddleware {
 
     const { accessToken, refreshToken } = this.getTokensFromResponse(res.data)
 
-    this.auth.saveToken(accessToken)
-    this.auth.saveRefreshToken(refreshToken)
+    if (accessToken) this.auth.saveToken(accessToken)
+    if (refreshToken) this.auth.saveRefreshToken(refreshToken)
+
     return accessToken
   }
 
   call = () => {
+    const { meta = {} } = this.action
+    const { 0: START } = this.action.types
+
+    this.dispatchAction({ type: START, meta })
+
     const token = this.auth.getToken()
 
     if (!token) {
