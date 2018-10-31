@@ -1,10 +1,11 @@
-import storage from "./localStorage"
+import storage from "./storage"
 
 class Auth {
   constructor(config = {}) {
     this.dataKey = config.dataKey || "auth_data"
     this.accessToken = config.accessToken || "authToken_access"
     this.refreshToken = config.refreshToken || "authToken_refresh"
+    this.logoutAction = config.logoutAction || "authToken_LOGOUT"
   }
 
   login = ({ data, accessToken, refreshToken }) => {
