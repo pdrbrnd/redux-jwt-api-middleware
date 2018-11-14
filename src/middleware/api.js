@@ -194,7 +194,7 @@ const middleware = config => ({ dispatch, getState }) => next => action => {
   const { types, shouldCallAPI = () => true } = action
 
   if (!types) return next(action)
-  if (!shouldCallAPI(getState())) return null
+  if (!shouldCallAPI(getState())) return new Promise(resolve => resolve())
 
   const api = new APIMiddleware(config, action, dispatch, getState)
 
