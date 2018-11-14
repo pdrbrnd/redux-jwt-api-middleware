@@ -105,7 +105,7 @@ class APIMiddleware {
     }
 
     return new Promise((resolve, reject) => {
-      callAPI(this.axiosInstance, this.getState())
+      callAPI(this.axiosInstance, this.getState(), this.dispatch)
         .then(response => {
           this.dispatchAction({
             type: SUCCESS,
