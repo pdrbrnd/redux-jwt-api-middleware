@@ -16,8 +16,8 @@ class APIMiddleware {
       - accessToken (String): localStorage's key to save access token
       - refreshToken (String): localStorage's key to save refresh token
 
-    - baseUrl (String)
-      The API's base url. e.g.: http://localhost:3000 (no trailing slash)
+    - axios (Object)
+      An axios instance with your desired configuration (e.g. baseUrl)
 
     - parseToken (Function. Arguments: token)
       The function to give the token to the authorization header
@@ -36,7 +36,7 @@ class APIMiddleware {
     this.auth = config.auth || new Auth()
 
     // Axios instance with baseURL set
-    this.axiosInstance = axios.create({ baseURL: config.baseUrl || "" })
+    this.axiosInstance = config.axios || axios.create()
 
     // Function to parse tokens in request headers
     this.parseToken = config.parseToken
@@ -99,16 +99,8 @@ class APIMiddleware {
 
     // Add token to authorization header
     if (token) {
-      this.axiosInstance.interceptors.request.use(
-        config => ({
-          ...config,
-          headers: {
-            ...config.headers,
-            Authorization:
-              config.headers.authorization || this.parseToken(token)
-          }
-        }),
-        error => Promise.reject(error)
+      this.axiosInstance.defaults.headers.common.Authorization = this.parseToken(
+        token
       )
     }
 
@@ -125,6 +117,11 @@ class APIMiddleware {
           return resolve(response)
         })
         .catch(error => {
+          if (this.catchAPIErrors(error).status === 401) {
+            this.auth.logout()
+            this.dispatchAction({ type: this.auth.logoutAction })
+          }
+
           this.dispatchAction({
             type: ERROR,
             meta,
@@ -151,18 +148,19 @@ class APIMiddleware {
   refreshToken = async () =>
     this.curriedMakeRefreshTokenCall(this.auth.getRefreshToken())
 
-  saveToken = res => {
-    if (res.status !== 200 || !res.data) {
-      return null
-    }
+  saveToken = res =>
+    new Promise(async (resolve, reject) => {
+      if (res.status !== 200 || !res.data) {
+        return reject(res)
+      }
 
-    const { accessToken, refreshToken } = this.getTokensFromResponse(res.data)
+      const { accessToken, refreshToken } = this.getTokensFromResponse(res.data)
 
-    if (accessToken) this.auth.saveToken(accessToken)
-    if (refreshToken) this.auth.saveRefreshToken(refreshToken)
+      if (accessToken) await this.auth.saveToken(accessToken)
+      if (refreshToken) await this.auth.saveRefreshToken(refreshToken)
 
-    return accessToken
-  }
+      return resolve(accessToken)
+    })
 
   call = () => {
     const { meta = {} } = this.action
@@ -179,6 +177,12 @@ class APIMiddleware {
     if (this.shouldRefreshToken(token)) {
       return this.refreshToken()
         .then(this.saveToken)
+        .catch(err => {
+          if (this.catchAPIErrors(err).status === 401) {
+            this.auth.logout()
+            this.dispatchAction({ type: this.auth.logoutAction })
+          }
+        })
         .then(this.makeRequest)
     }
 
